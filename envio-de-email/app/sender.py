@@ -1,8 +1,16 @@
-import psycopg2
-import redis
-import json
-import os
-from bottle import Bottle, request
+from bottle import route,run,request
+
+
+@route('/', method='POST')
+def send():
+    assunto = request.forms.get('assunto')
+    mensagem = request.forms.get('mensagem')
+    return 'Mensagem enfileiradaaaaa '.format(
+        assunto,mensagem
+    )
+
+if __name__ == '__main__':
+    run(host='0.0.0.0', port=9080, debug=True)
 
 
 class Sender(Bottle):
@@ -11,7 +19,7 @@ class Sender(Bottle):
         self.route('/', method='POST', callback=self.send)
         
         redis_host = os.getenv('REDIS_HOST', 'queue')
-        self.fila = redis.StrictRedis(host=redis_host, port=6379, db=0)
+        self.fila = redis.StrictRedis(host=redis_host, port=9080, db=0)
 
         db_host = os.getenv('DB_HOST', 'db')
         db_user = os.getenv('DB_USER', 'postgres')
