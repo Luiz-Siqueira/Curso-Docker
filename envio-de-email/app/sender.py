@@ -1,16 +1,8 @@
-from bottle import route,run,request
-
-
-@route('/', method='POST')
-def send():
-    assunto = request.forms.get('assunto')
-    mensagem = request.forms.get('mensagem')
-    return 'Mensagem enfileiradaaaaa '.format(
-        assunto,mensagem
-    )
-
-if __name__ == '__main__':
-    run(host='0.0.0.0', port=9080, debug=True)
+import psycopg2
+import redis
+import json
+import os
+from bottle import Bottle, request
 
 
 class Sender(Bottle):
@@ -19,12 +11,13 @@ class Sender(Bottle):
         self.route('/', method='POST', callback=self.send)
         
         redis_host = os.getenv('REDIS_HOST', 'queue')
-        self.fila = redis.StrictRedis(host=redis_host, port=9080, db=0)
+        self.fila = redis.StrictRedis(host=redis_host, port=6379, db=0)
 
         db_host = os.getenv('DB_HOST', 'db')
         db_user = os.getenv('DB_USER', 'postgres')
-        db_name = os.getenv('DB_NAME', 'sender')
-        dsn = f'dbname={db_name} user={db_user} host={db_host}'
+        db_name = os.getenv('DB_NAME', 'email_sender')
+        db_pass = os.getenv('DB_PASS', 'postgres')
+        dsn = f'dbname={db_name} user={db_user} password={db_pass} host={db_host}'
         self.conn = psycopg2.connect(dsn)
         
     def register_message(self, assunto, mensagem):
@@ -47,3 +40,7 @@ class Sender(Bottle):
         return 'Mensagem enfileirada ! Assunto: {} Mensagem: {}'.format(
             assunto, mensagem
         )
+
+if __name__ == '__main__':
+    sender = Sender()
+    sender.run(host='0.0.0.0', port=8080, debug=True)
